@@ -1,0 +1,131 @@
+{
+  "name": "smart-contract-editor",
+  "version": "2.0.0",
+  "description": "AI-powered smart contract editor plugin for Microsoft Word with RAG-based compliance analysis",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "dev-server": "concurrently \"npm run dev\" \"npm run watch-files\"",
+    "watch-files": "nodemon --watch taskpane.html --watch manifest.xml --exec \"npm run copy-files\"",
+    "test": "jest",
+    "build": "npm run copy-files && npm run create-dirs",
+    "copy-files": "node -e \"const fs=require('fs'); try{fs.copyFileSync('taskpane.html','public/taskpane.html')}catch(e){console.log('taskpane.html not found')} try{fs.copyFileSync('manifest.xml','public/manifest.xml')}catch(e){console.log('manifest.xml not found')}\"",
+    "setup": "node scripts/setup.js",
+    "create-dirs": "node -e \"const fs=require('fs'); ['public/assets','uploads/policies','logs','scripts'].forEach(dir => fs.mkdirSync(dir,{recursive:true}))\"",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "chroma:start": "docker-compose up -d chromadb",
+    "chroma:stop": "docker-compose stop chromadb",
+    "chroma:logs": "docker-compose logs chromadb",
+    "validate": "node scripts/setup.js validate",
+    "lint": "eslint . --ext .js --ignore-path .gitignore",
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "clean": "rm -rf node_modules public/taskpane.html public/manifest.xml",
+    "reset": "npm run clean && npm install && npm run setup",
+    "health-check": "curl -f http://localhost:3000/api/health || exit 1",
+    "install-deps": "npm install && npm run create-dirs && npm run copy-files"
+  },
+  "keywords": [
+    "contract",
+    "compliance",
+    "legal",
+    "microsoft-word",
+    "office-addin",
+    "ai",
+    "document-analysis",
+    "rag",
+    "chromadb",
+    "claude-api",
+    "legal-tech",
+    "vector-database",
+    "anthropic",
+    "smart-contracts"
+  ],
+  "author": "Smart Contract Editor Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "uuid": "^9.0.1",
+    "chromadb": "^1.7.3",
+    "@anthropic-ai/sdk": "^0.20.9",
+    "winston": "^3.11.0",
+    "express-session": "^1.17.3",
+    "cookie-parser": "^1.4.6",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.11.0",
+    "axios": "^1.6.2",
+    "node-cron": "^3.0.3",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "concurrently": "^8.2.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.1",
+    "@types/node": "^20.10.4",
+    "cross-env": "^7.0.3",
+    "rimraf": "^5.0.5",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/smart-contract-editor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/smart-contract-editor/issues"
+  },
+  "homepage": "https://github.com/your-username/smart-contract-editor#readme",
+  "optionalDependencies": {
+    "sharp": "^0.32.6",
+    "canvas": "^2.11.2"
+  },
+  "config": {
+    "chromadb_version": "latest",
+    "node_env": "development"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm test"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/public/",
+      "/uploads/",
+      "/logs/"
+    ]
+  }
+}

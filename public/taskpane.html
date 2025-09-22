@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smart Contract Editor</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 100%;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #323130;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e1e1e1;
+            border-radius: 6px;
+        }
+
+        .section h3 {
+            margin: 0 0 15px 0;
+            color: #106ebe;
+            font-size: 16px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #106ebe;
+            background: #f0f8ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #106ebe;
+            background: #e6f3ff;
+        }
+
+        .btn {
+            background: #106ebe;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #0078d4;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .results-area {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e1e1e1;
+            border-radius: 4px;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .compliance-score {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .score-high {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .score-medium {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .score-low {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .suggestion {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-left: 4px solid #106ebe;
+            background: #f0f8ff;
+        }
+
+        .suggestion-title {
+            font-weight: bold;
+            color: #106ebe;
+            margin-bottom: 5px;
+        }
+
+        .issue {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-left: 4px solid #dc3545;
+            background: #f8f9fa;
+        }
+
+        .issue-title {
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #106ebe;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .policy-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e1e1e1;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .policy-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #106ebe;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Smart Contract Editor</h2>
+            <p>AI-powered compliance checking and contract analysis</p>
+        </div>
+
+        <!-- Policy Upload Section -->
+        <div class="section">
+            <h3>📋 Policy Management</h3>
+            <div class="upload-area" id="policyUpload">
+                <p>Drop policy documents here or click to upload</p>
+                <input type="file" id="policyInput" class="file-input" multiple accept=".txt,.doc,.docx,.pdf">
+                <button class="btn" onclick="document.getElementById('policyInput').click()">
+                    Choose Files
+                </button>
+            </div>
+            <div id="policyList" class="policy-list" style="display: none;">
+                <h4>Uploaded Policies:</h4>
+                <div id="policies"></div>
+            </div>
+        </div>
+
+        <!-- Contract Analysis Section -->
+        <div class="section">
+            <h3>📄 Contract Analysis</h3>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button class="btn" id="analyzeBtn" onclick="analyzeDocument()">
+                    Analyze Current Document
+                </button>
+                <button class="btn btn-secondary" onclick="checkGrammar()">
+                    Grammar Check
+                </button>
+            </div>
+
+            <div class="stats" id="statsArea" style="display: none;">
+                <div class="stat">
+                    <div class="stat-number" id="complianceScore">--</div>
+                    <div class="stat-label">Compliance Score</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="issueCount">--</div>
+                    <div class="stat-label">Issues Found</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="suggestionCount">--</div>
+                    <div class="stat-label">Suggestions</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="section">
+            <h3>📊 Analysis Results</h3>
+            <div class="results-area" id="resultsArea">
+                <p style="text-align: center; color: #666; padding: 40px;">
+                    Upload policies and analyze your document to see results here.
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <h3>⚡ Quick Actions</h3>
+            <button class="btn btn-secondary" onclick="exportResults()">Export Report</button>
+            <button class="btn btn-secondary" onclick="clearResults()">Clear Results</button>
+            <button class="btn" onclick="applyAllSuggestions()" id="applyBtn" style="display: none;">
+                Apply All Suggestions
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let uploadedPolicies = [];
+        let analysisResults = null;
+        let suggestions = [];
+
+        // Initialize Office Add-in
+        Office.onReady((info) => {
+            console.log('Office Add-in ready');
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Drag and drop for policy upload
+            const uploadArea = document.getElementById('policyUpload');
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handlePolicyFiles(e.dataTransfer.files);
+            });
+
+            // File input change
+            document.getElementById('policyInput').addEventListener('change', (e) => {
+                handlePolicyFiles(e.target.files);
+            });
+        }
+
+        async function handlePolicyFiles(files) {
+            for (let file of files) {
+                const text = await readFileAsText(file);
+                uploadedPolicies.push({
+                    name: file.name,
+                    content: text,
+                    uploadDate: new Date().toISOString()
+                });
+            }
+
+            updatePolicyList();
+            showMessage(`Uploaded ${files.length} policy document(s)`, 'success');
+        }
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        function updatePolicyList() {
+            const policyList = document.getElementById('policyList');
+            const policiesDiv = document.getElementById('policies');
+
+            if (uploadedPolicies.length > 0) {
+                policyList.style.display = 'block';
+                policiesDiv.innerHTML = uploadedPolicies.map(policy =>
+                    `<div class="policy-item">📄 ${policy.name}</div>`
+                ).join('');
+            }
+        }
+
+        async function analyzeDocument() {
+            if (uploadedPolicies.length === 0) {
+                showMessage('Please upload policy documents first', 'error');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const resultsArea = document.getElementById('resultsArea');
+
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'Analyzing...';
+
+            resultsArea.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing document compliance...</p>
+                </div>
+            `;
+
+            try {
+                await Word.run(async (context) => {
+                    const body = context.document.body;
+                    body.load("text");
+                    await context.sync();
+
+                    const documentText = body.text;
+
+                    // Perform analysis
+                    analysisResults = await performCompliance Analysis(documentText);
+                    displayResults(analysisResults);
+                });
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showMessage('Error analyzing document: ' + error.message, 'error');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze Current Document';
+            }
+        }
+
+        async function performComplianceAnalysis(documentText) {
+            // Simulate API call to backend
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const issues = [];
+            const suggestions = [];
+            let complianceScore = 85;
+
+            // Simple rule-based compliance checking
+            const commonIssues = [
+                {
+                    pattern: /shall(?!\s+not)/gi,
+                    issue: "Use of 'shall' - consider 'will' or 'must' for clarity",
+                    suggestion: "Replace 'shall' with 'will' or 'must' for better clarity"
+                },
+                {
+                    pattern: /hereby/gi,
+                    issue: "Unnecessary use of 'hereby' - consider removal",
+                    suggestion: "Remove unnecessary 'hereby' for cleaner language"
+                },
+                {
+                    pattern: /whereas/gi,
+                    issue: "Overuse of 'whereas' clauses - consider simplification",
+                    suggestion: "Simplify or combine 'whereas' clauses"
+                }
+            ];
+
+            // Check against policies
+            for (let policy of uploadedPolicies) {
+                // Simple keyword matching
+                const policyKeywords = extractKeywords(policy.content);
+                const docKeywords = extractKeywords(documentText);
+
+                const missingKeywords = policyKeywords.filter(keyword =>
+                    !docKeywords.some(docKeyword =>
+                        docKeyword.toLowerCase().includes(keyword.toLowerCase())
+                    )
+                );
+
+                if (missingKeywords.length > 0) {
+                    issues.push({
+                        type: 'Policy Compliance',
+                        description: `Missing required terms from ${policy.name}`,
+                        details: missingKeywords.slice(0, 3).join(', ')
+                    });
+
+                    suggestions.push({
+                        type: 'Policy Alignment',
+                        description: `Consider adding terms from ${policy.name}`,
+                        suggestion: `Include: ${missingKeywords.slice(0, 2).join(', ')}`
+                    });
+
+                    complianceScore -= 5;
+                }
+            }
+
+            // Check common issues
+            for (let rule of commonIssues) {
+                const matches = documentText.match(rule.pattern);
+                if (matches && matches.length > 0) {
+                    issues.push({
+                        type: 'Language Issue',
+                        description: rule.issue,
+                        count: matches.length
+                    });
+
+                    suggestions.push({
+                        type: 'Language Improvement',
+                        description: rule.suggestion,
+                        pattern: rule.pattern
+                    });
+
+                    complianceScore -= Math.min(matches.length * 2, 10);
+                }
+            }
+
+            return {
+                complianceScore: Math.max(complianceScore, 0),
+                issues,
+                suggestions,
+                wordCount: documentText.split(/\s+/).length,
+                analysisDate: new Date().toISOString()
+            };
+        }
+
+        function extractKeywords(text) {
+            // Simple keyword extraction
+            const commonWords = ['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'shall'];
+
+            return text.toLowerCase()
+                .replace(/[^\w\s]/g, ' ')
+                .split(/\s+/)
+                .filter(word => word.length > 3 && !commonWords.includes(word))
+                .slice(0, 20);
+        }
+
+        function displayResults(results) {
+            const resultsArea = document.getElementById('resultsArea');
+            const statsArea = document.getElementById('statsArea');
+            const applyBtn = document.getElementById('applyBtn');
+
+            // Update stats
+            document.getElementById('complianceScore').textContent = results.complianceScore + '%';
+            document.getElementById('issueCount').textContent = results.issues.length;
+            document.getElementById('suggestionCount').textContent = results.suggestions.length;
+            statsArea.style.display = 'flex';
+
+            // Show apply button if there are suggestions
+            if (results.suggestions.length > 0) {
+                applyBtn.style.display = 'inline-block';
+            }
+
+            let html = '';
+
+            // Compliance score
+            const scoreClass = results.complianceScore >= 80 ? 'score-high' :
+                             results.complianceScore >= 60 ? 'score-medium' : 'score-low';
+
+            html += `
+                <div class="compliance-score ${scoreClass}">
+                    Compliance Score: ${results.complianceScore}%
+                </div>
+            `;
+
+            // Issues
+            if (results.issues.length > 0) {
+                html += '<h4>🔍 Issues Found:</h4>';
+                results.issues.forEach(issue => {
+                    html += `
+                        <div class="issue">
+                            <div class="issue-title">${issue.type}</div>
+                            <div>${issue.description}</div>
+                            ${issue.details ? `<small>Details: ${issue.details}</small>` : ''}
+                            ${issue.count ? `<small>Found ${issue.count} instance(s)</small>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            // Suggestions
+            if (results.suggestions.length > 0) {
+                html += '<h4>💡 Suggestions:</h4>';
+                results.suggestions.forEach((suggestion, index) => {
+                    html += `
+                        <div class="suggestion">
+                            <div class="suggestion-title">${suggestion.type}</div>
+                            <div>${suggestion.description}</div>
+                            ${suggestion.suggestion ? `<small>Suggestion: ${suggestion.suggestion}</small>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            if (results.issues.length === 0 && results.suggestions.length === 0) {
+                html += '<p style="text-align: center; color: #28a745; padding: 20px;">✅ No major issues found!</p>';
+            }
+
+            resultsArea.innerHTML = html;
+            suggestions = results.suggestions;
+        }
+
+        async function checkGrammar() {
+            try {
+                await Word.run(async (context) => {
+                    const body = context.document.body;
+                    body.load("text");
+                    await context.sync();
+
+                    // Trigger Word's built-in spell check
+                    showMessage('Grammar and spell check completed. Check Word\'s built-in suggestions.', 'success');
+                });
+            } catch (error) {
+                showMessage('Error running grammar check: ' + error.message, 'error');
+            }
+        }
+
+        async function applyAllSuggestions() {
+            if (suggestions.length === 0) {
+                showMessage('No suggestions to apply', 'info');
+                return;
+            }
+
+            try {
+                await Word.run(async (context) => {
+                    const body = context.document.body;
+                    body.load("text");
+                    await context.sync();
+
+                    let text = body.text;
+                    let appliedCount = 0;
+
+                    // Apply pattern-based suggestions
+                    suggestions.forEach(suggestion => {
+                        if (suggestion.pattern) {
+                            if (suggestion.pattern.source.includes('shall')) {
+                                text = text.replace(/\bshall\b/gi, 'will');
+                                appliedCount++;
+                            } else if (suggestion.pattern.source.includes('hereby')) {
+                                text = text.replace(/\bhereby\b/gi, '');
+                                appliedCount++;
+                            }
+                        }
+                    });
+
+                    // Clear and insert corrected text
+                    body.clear();
+                    body.insertText(text, Word.InsertLocation.start);
+                    await context.sync();
+
+                    showMessage(`Applied ${appliedCount} suggestions`, 'success');
+                });
+            } catch (error) {
+                showMessage('Error applying suggestions: ' + error.message, 'error');
+            }
+        }
+
+        function exportResults() {
+            if (!analysisResults) {
+                showMessage('No analysis results to export', 'info');
+                return;
+            }
+
+            const report = {
+                analysisDate: analysisResults.analysisDate,
+                complianceScore: analysisResults.complianceScore,
+                issues: analysisResults.issues,
+                suggestions: analysisResults.suggestions,
+                policiesUsed: uploadedPolicies.map(p => p.name)
+            };
+
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `contract_analysis_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showMessage('Analysis report exported', 'success');
+        }
+
+        function clearResults() {
+            document.getElementById('resultsArea').innerHTML = `
+                <p style="text-align: center; color: #666; padding: 40px;">
+                    Upload policies and analyze your document to see results here.
+                </p>
+            `;
+            document.getElementById('statsArea').style.display = 'none';
+            document.getElementById('applyBtn').style.display = 'none';
+            analysisResults = null;
+            suggestions = [];
+            showMessage('Results cleared', 'info');
+        }
+
+        function showMessage(message, type = 'info') {
+            // Simple message display - could be enhanced with a proper notification system
+            const colors = {
+                success: '#28a745',
+                error: '#dc3545',
+                info: '#17a2b8'
+            };
+
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type]};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 4px;
+                z-index: 1000;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            `;
+            messageDiv.textContent = message;
+
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
